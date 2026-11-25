@@ -1,0 +1,72 @@
+# usd-nowcast-stack — indicator pool, targets & external sources
+# transform: level | log | pct_1m | pct_3m | pct_3m_ann | pct_q | diff_1m
+
+targets:
+  core_pce_mm:
+    series: PCEPILFE          # PCE excluding food & energy (index, SA)
+    source: FRED
+    freq: M
+    transform: pct_1m         # BEA publishes m/m % (rounded to 0.1pp)
+    release: "Personal Income & Outlays, October 2026 (BEA, 2026-11-25)"
+  gdp_qoq:
+    series: GDPC1             # real GDP, SAAR
+    source: FRED
+    freq: Q
+    transform: level_saar     # released number is the SAAR growth rate
+    release: "GDP second estimate (Prelim), Q3 2026 (BEA, 2026-11-25)"
+  deflator_qoq:
+    series: GDPCTPI           # GDP implicit price deflator, SAAR
+    source: FRED
+    freq: Q
+    transform: level_saar
+    release: "same BEA release"
+
+blocks:
+  labor:
+    - {code: PAYEMS,   freq: M, transform: pct_1m,      note: nonfarm payrolls}
+    - {code: UNRATE,   freq: M, transform: level,       note: unemployment rate}
+    - {code: CIVPART,  freq: M, transform: level,       note: labor force participation}
+    - {code: AHETPI,   freq: M, transform: pct_3m_ann,  note: avg hourly earnings}
+    - {code: ICSA,     freq: W, transform: log_4w_avg,  note: initial jobless claims}
+    - {code: TCU,      freq: M, transform: level,       note: capacity utilization}
+  income_spending:
+    - {code: DSPIC96,  freq: M, transform: pct_1m,      note: real disposable income}
+    - {code: PCE,      freq: M, transform: pct_1m,      note: nominal PCE}
+    - {code: PCEC96,   freq: M, transform: pct_1m,      note: real consumption}
+    - {code: RSAFSx,   freq: M, transform: pct_3m,      note: real retail sales ex food}
+    - {code: UMCSENT,  freq: M, transform: level,       note: U-Mich consumer sentiment}
+  prices:
+    - {code: CPIAUCSL,     freq: M, transform: pct_1m, note: headline CPI}
+    - {code: CPILFESL,     freq: M, transform: pct_1m, note: core CPI}
+    - {code: PCEPI,        freq: M, transform: pct_1m, note: headline PCE}
+    - {code: PCEPILFE,     freq: M, transform: pct_1m, note: core PCE}
+    - {code: PPIACO,       freq: M, transform: pct_1m, note: PPI all commodities}
+    - {code: WPSFD49207,   freq: M, transform: pct_1m, note: PPI trade services}
+    - {code: OILPRICEx,    freq: M, transform: pct_1m, note: WTI spot}
+  housing:
+    - {code: HOUST,     freq: M, transform: level,   note: housing starts}
+    - {code: PERMIT,    freq: M, transform: level,   note: building permits}
+    - {code: CSUSHPISA, freq: M, transform: pct_3m,  note: Case-Shiller national}
+  surveys_production:
+    - {code: NAPM,      freq: M, transform: level,   note: ISM manufacturing PMI}
+    - {code: NAPMNPI,   freq: M, transform: level,   note: ISM services PMI}
+    - {code: IPMAN,     freq: M, transform: pct_3m,  note: industrial production (mfg)}
+  gdp_components:
+    - {code: PCEC96,  freq: Q, transform: pct_q_saar_delta, note: real PCE (Q)}
+    - {code: GPDIC1,  freq: Q, transform: pct_q_saar_delta, note: real fixed investment (Q)}
+    - {code: NETEXP,  freq: Q, transform: level,            note: net exports contribution (Q)}
+    - {code: GCEC1,   freq: Q, transform: pct_q_saar_delta, note: real government (Q)}
+
+external:
+  cleveland_fed_nowcast:
+    month_json: "https://www.clevelandfed.org/-/media/files/webcharts/inflationnowcasting/nowcast_month.json?sc_lang=en"
+    year_json: "https://www.clevelandfed.org/-/media/files/webcharts/inflationnowcasting/nowcast_year.json?sc_lang=en"
+  atlanta_fed_gdpnow:
+    page: "https://www.atlantafed.org/cqer/research/gdpnow"
+  zillow_zori:
+    metro_csv: "https://files.zillowstatic.com/research/public_csvs/zori/Metro_zori_uc_sfrcondomfr_sm_month.csv"
+  bls_v2:
+    endpoint: "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+    series: [CUSR0000SA0, CUSR0000SAH1, CUSR0000SETB01, CUUR0000SA0, CES0500000003]
+  bea_nipa:
+    tables: [T10101, T10102, T10104, T10105, T10106]
